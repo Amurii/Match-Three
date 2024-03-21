@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -372,23 +373,68 @@ public class Board : MonoBehaviour
         bool isDestroyed = false;
         int matchedCounter = 0;
         Dictionary<List<Tile>, PatternShape> matchedPatterns = CheckMatchingPatterns(board);
+        Dictionary<List<Tile>, PatternShape> matchedPatternsDic = MergeTwoLists(matchedPatterns);
         //regular the matched patterns as one 
-     //   Dictionary<List<Tile>, PatternShape> PhasePatterns = GetRegularPatterns();
+        // Dictionary<List<Tile>, PatternShape> PhasePatterns = GetRegularPatterns(matchedPatterns);
         foreach (var pattern in matchedPatterns)
         {
             int matched = 0;
             isDestroyed = true;
             matched += DestroyItems(pattern.Key);
+          
             matchedCounter += matched;
             CreatePowerupByPatternShape(pattern.Value, pattern.Key);
-            Debug.Log("The pattern count is " + matched + " And pattern shape is " + pattern.Value.ToString());
+            Debug.Log("The pattern count is " + pattern.Key.Count + " And pattern shape is " + pattern.Value.ToString());
         }
+        SoundManager.instance.AudioPlay(AudioClips.Fail);
 
         FillAfterDestroy();
         GamePlay.instance.TargetUpdate(matchedCounter);
         return isDestroyed;
     }
 
+    //private Dictionary<List<Tile>, PatternShape> GetRegularPatterns(Dictionary<List<Tile>, PatternShape> matchedPatterns)
+    //{
+    //    Dictionary<List<Tile>, PatternShape> patterns = new Dictionary<List<Tile>, PatternShape>();
+    //    List<List<Tile>> lists = new List<List<Tile>>();
+    //    foreach (var key in matchedPatterns)
+    //        lists.Add(key.Key);
+    //    if (lists.Count == 1)
+    //    {
+    //        patterns.Add(lists[0], matchedPatterns[lists[0]]);
+    //        return patterns;
+    //    }
+    //    for(int i = 0; i < lists.Count-1; i++)
+    //    {
+    //        for(int index = i; index < lists.Count; index++)
+    //        {
+    //            //Check for vertical
+    //            if ((lists[i][index].y == lists[i+1][index ].y)&&
+    //                (Mathf.Abs(lists[i][index].x -lists[i+1][index].x)==1))
+    //            {
+    //                patterns.Add(MergeTwoLists(lists[i], lists[i+1]), PatternShape.Vertical);
+    //            }
+    //        }
+    //    }
+    //    return patterns;
+    //}
+    private Dictionary<List<Tile>,PatternShape> MergeTwoLists(Dictionary<List<Tile>, PatternShape> matchedPatterns)
+    {
+        Dictionary<List<Tile>, PatternShape> patternsDic = new Dictionary<List<Tile>, PatternShape>();
+        foreach (var pat in matchedPatterns)
+        {
+            foreach(var pat2 in matchedPatterns)
+            {
+                if (pat2.Key == pat.Key) break;
+                if (pat.Value == PatternShape.Horizontal && pat2.Value == PatternShape.Horizontal)
+                {
+                    //Merge
+                    patternsDic.Add(pat2.Key.Union(pat.Key).ToList(),PatternShape.Horizontal);
+                }
+            }
+        }
+        return patternsDic;
+    }
     //private Dictionary<List<Tile>, PatternShape> GetRegularPatterns()
     //{
 
@@ -498,35 +544,7 @@ public class Board : MonoBehaviour
             return true;
         }
 
-        ///////////////////////////////////////////// Check for horizontal matches
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < cols - 2; c++)
-            {
-                List<Tile> sequence = new List<Tile>();
-                for (int i = 0; i < 3; i++)
-                {
-                    sequence.Add(matrix[r, c + i]);
-                }
-                if (CheckSequence(sequence))
-                    matchedPatterns.Add(sequence, PatternShape.Horizontal);
-            }
-        }
-
-        ///////////////////////////////////////////// Check for vertical matches
-        for (int c = 0; c < cols; c++)
-        {
-            for (int r = 0; r < rows - 2; r++)
-            {
-                List<Tile> sequence = new List<Tile>();
-                for (int i = 0; i < 3; i++)
-                {
-                    sequence.Add(matrix[r + i, c]);
-                }
-                if (CheckSequence(sequence))
-                    matchedPatterns.Add(sequence, PatternShape.Vertical);
-            }
-        }
+      
 
         ///////////////////////////////////////////// Check for L-shape matches
         for (int r = 0; r < rows - 1; r++)
@@ -668,6 +686,35 @@ public class Board : MonoBehaviour
                 sequence.Add(matrix[c + 2, r + 2]);
                 if (CheckSequence(sequence))
                     matchedPatterns.Add(sequence, PatternShape.H);
+            }
+        }
+        ///////////////////////////////////////////// Check for horizontal matches
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols - 2; c++)
+            {
+                List<Tile> sequence = new List<Tile>();
+                for (int i = 0; i < 3; i++)
+                {
+                    sequence.Add(matrix[r, c + i]);
+                }
+                if (CheckSequence(sequence))
+                    matchedPatterns.Add(sequence, PatternShape.Horizontal);
+            }
+        }
+
+        ///////////////////////////////////////////// Check for vertical matches
+        for (int c = 0; c < cols; c++)
+        {
+            for (int r = 0; r < rows - 2; r++)
+            {
+                List<Tile> sequence = new List<Tile>();
+                for (int i = 0; i < 3; i++)
+                {
+                    sequence.Add(matrix[r + i, c]);
+                }
+                if (CheckSequence(sequence))
+                    matchedPatterns.Add(sequence, PatternShape.Vertical);
             }
         }
         return matchedPatterns;
