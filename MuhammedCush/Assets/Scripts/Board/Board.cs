@@ -386,7 +386,7 @@ public class Board : MonoBehaviour
             CreatePowerupByPatternShape(pattern.Value, pattern.Key);
             Debug.Log("The pattern count is " + pattern.Key.Count + " And pattern shape is " + pattern.Value.ToString());
         }
-        SoundManager.instance.AudioPlay(AudioClips.Fail);
+      //  SoundManager.instance.AudioPlay(AudioClips.Fail);
 
         FillAfterDestroy();
         GamePlay.instance.TargetUpdate(matchedCounter);
